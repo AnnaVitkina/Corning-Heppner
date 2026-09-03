@@ -22,7 +22,7 @@ _colab_code = Path("/content/Corning-Heppner")
 if _colab_code.exists() and str(_colab_code) not in sys.path:
     sys.path.insert(0, str(_colab_code))
 
-from paths import ensure_runtime_setup, get_paths
+from paths import ensure_runtime_setup, exit_with_code, get_paths
 
 ensure_runtime_setup()
 
@@ -104,4 +104,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_with_code(main())
