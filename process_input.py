@@ -15,7 +15,7 @@ import openpyxl
 import pandas as pd
 from openpyxl.styles import Alignment
 
-from paths import get_paths
+from paths import exit_with_code, get_paths
 
 SUPPORTED_EXTENSIONS = {".xlsx", ".xlsm", ".xls"}
 EXCLUDED_NAME_ENDINGS = (
@@ -413,4 +413,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_with_code(main())
