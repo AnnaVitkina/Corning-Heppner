@@ -100,6 +100,12 @@ def get_paths() -> ProjectPaths:
     return _paths
 
 
+def exit_with_code(code: int) -> None:
+    """Exit only on failure so Colab/Jupyter does not show SystemExit: 0 as an error."""
+    if code:
+        sys.exit(code)
+
+
 def reset_paths() -> None:
     """Clear cached paths. Useful in tests or after changing environment variables."""
     global _paths
