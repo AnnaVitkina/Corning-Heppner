@@ -18,21 +18,67 @@ from openpyxl.styles import Alignment
 from paths import get_paths
 
 SUPPORTED_EXTENSIONS = {".xlsx", ".xlsm", ".xls"}
+EXCLUDED_NAME_ENDINGS = (
+    "_processed.xlsx",
+    "_processed.xlsm",
+    "_processed.xls",
+    "_matrix.xlsx",
+    "_matrix.xlsm",
+    "_shipment_matrix.xlsx",
+    "_shipment_matrix.xlsm",
+)
 
 LIBELLE_MARKERS = ("libell", "libelle")
 FOOTNOTE_MARKERS = ("poids arrondi", "tarif ht en euro")
 
 
+def is_source_input_file(path: Path) -> bool:
+    if not path.is_file() or path.name.startswith("~$"):
+        return False
+    if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+        return False
+    name_lower = path.name.lower()
+    return not any(name_lower.endswith(ending) for ending in EXCLUDED_NAME_ENDINGS)
+
+
 def list_input_files() -> list[Path]:
     input_dir = get_paths().input_dir
-    files = sorted(
-        path
-        for path in input_dir.iterdir()
-        if path.is_file()
-        and path.suffix.lower() in SUPPORTED_EXTENSIONS
-        and not path.name.startswith("~$")
-    )
+    files: list[Path] = []
+    skipped: list[str] = []
+
+    for path in sorted(input_dir.iterdir()):
+        if not path.is_file() or path.name.startswith("~$"):
+            continue
+        if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            continue
+        if is_source_input_file(path):
+            files.append(path)
+        else:
+            skipped.append(path.name)
+
+    if skipped:
+        print("\nSkipped files in input/ (not original supplier tariffs):")
+        for name in skipped:
+            print(f"  - {name}")
+        print("Only place the original Heppner .xlsx files in input/.")
+
     return files
+
+
+def validate_source_workbook(file_path: Path) -> None:
+    workbook = openpyxl.load_workbook(file_path, data_only=True, read_only=True)
+    try:
+        for sheet_name in workbook.sheetnames:
+            if find_header_row(workbook[sheet_name]) is not None:
+                return
+    finally:
+        workbook.close()
+
+    raise ValueError(
+        f"{file_path.name} does not look like a source Heppner tariff file.\n"
+        "Expected tabs with a 'Libellé' column.\n"
+        "Put the original supplier workbook in input/, not *_processed.xlsx or *_matrix.xlsx."
+    )
 
 
 def prompt_file_selection(files: list[Path]) -> list[Path]:
@@ -285,6 +331,7 @@ def extract_clean_sheet(
 
 
 def process_file(file_path: Path) -> Path:
+    validate_source_workbook(file_path)
     wb_values = openpyxl.load_workbook(file_path, data_only=True)
     wb_formats = openpyxl.load_workbook(file_path, data_only=False)
 
@@ -341,7 +388,9 @@ def main() -> int:
 
     files = list_input_files()
     if not files:
-        print(f"No Excel files found in {input_dir}")
+        print(f"No source tariff files found in {input_dir}")
+        print("Add the original Heppner supplier .xlsx to input/.")
+        print("Do not use *_processed.xlsx or *_matrix.xlsx files as input.")
         return 1
 
     print(f"Environment: {paths.environment}")
