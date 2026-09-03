@@ -66,7 +66,9 @@ def main() -> int:
 
     files = list_input_files()
     if not files:
-        print(f"No Excel files found in {paths.input_dir}")
+        print(f"No source tariff files found in {paths.input_dir}")
+        print("Add the original Heppner supplier .xlsx to input/.")
+        print("Do not use *_processed.xlsx or *_matrix.xlsx files as input.")
         return 1
 
     print("Heppner tariff pipeline")
