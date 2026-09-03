@@ -15,7 +15,7 @@ import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from paths import get_paths
+from paths import exit_with_code, get_paths
 
 EXPECTED_ORIGIN_COUNTRY = "FR"
 EXPECTED_ORIGIN_POSTAL_CODE = "44160"
@@ -537,4 +537,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_with_code(main())
